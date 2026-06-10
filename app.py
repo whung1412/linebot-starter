@@ -45,7 +45,7 @@ def log_to_sheets(user_id, user_msg, bot_reply):
         values = [[now, user_id, user_msg, bot_reply]]
         service.spreadsheets().values().append(
             spreadsheetId=SPREADSHEET_ID,
-            range='工作表1!A:D'
+            range='工作表1!A:D',
             valueInputOption='RAW',
             body={'values': values}
         ).execute()
