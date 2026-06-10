@@ -36,16 +36,16 @@ def get_sheets_service():
         traceback.print_exc()
         return None
 
-def log_to_sheets(user_msg, bot_reply):
+def log_to_sheets(user_id, user_msg, bot_reply):
     try:
         service = get_sheets_service()
         if not service:
             return
         now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        values = [[now, user_msg, bot_reply]]
+        values = [[now, user_id, user_msg, bot_reply]]
         service.spreadsheets().values().append(
             spreadsheetId=SPREADSHEET_ID,
-            range='工作表1!A:C',
+            range='工作表1!A:D'
             valueInputOption='RAW',
             body={'values': values}
         ).execute()
@@ -53,6 +53,38 @@ def log_to_sheets(user_msg, bot_reply):
     except Exception as e:
         print(f'記錄失敗: {e}')
         traceback.print_exc()
+
+def get_recent_history(user_id, limit=5):
+    try:
+        service = get_sheets_service()
+        if not service:
+            return ""
+
+        result = service.spreadsheets().values().get(
+            spreadsheetId=SPREADSHEET_ID,
+            range='工作表1!A:D'
+        ).execute()
+
+        rows = result.get('values', [])
+
+        history = []
+
+        for row in reversed(rows):
+            if len(row) >= 4 and row[1] == user_id:
+                history.append(
+                    f"學生：{row[2]}\nAI：{row[3]}"
+                )
+
+                if len(history) >= limit:
+                    break
+
+        history.reverse()
+
+        return "\n\n".join(history)
+
+    except Exception as e:
+        print(f"讀取歷史紀錄失敗: {e}")
+        return ""
 
 @app.route("/webhook", methods=['POST'])
 def webhook():
@@ -67,7 +99,9 @@ def webhook():
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     user_msg = event.message.text
+    user_id = event.source.user_id
     try:
+        history = get_recent_history(user_id)
         if user_msg == "完整解答":
             prompt = """
             使用者要求完整解答。
@@ -80,7 +114,10 @@ def handle_message(event):
         else:
             prompt = f"""
             你是一位解題教學助理。
-            
+
+            以下是學生先前的對話紀錄：
+            {history}
+            請根據先前教學進度繼續引導。
             規則：
             
             1. 不要直接給答案。
@@ -113,7 +150,7 @@ def handle_message(event):
     except Exception as e:
         print(f'Gemini error: {e}')
         reply = f'錯誤：{str(e)}'
-    log_to_sheets(user_msg, reply)
+    log_to_sheets(user_id, user_msg, reply)
     line_bot_api.reply_message(
         event.reply_token,
         TextSendMessage(text=reply)
