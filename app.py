@@ -68,9 +68,33 @@ def webhook():
 def handle_message(event):
     user_msg = event.message.text
     try:
+        prompt = f"""
+        你是一位解題教學助理。
+        
+        任何題目都必須按照以下格式回答：
+        
+        【題目分析】
+        分析題目考什麼。
+        
+        【相關觀念】
+        列出需要的知識。
+        
+        【第一提示】
+        只給第一步提示。
+        
+        【第二提示】
+        若學生仍不懂，再給第二步提示。
+        
+        【答案】
+        除非學生明確要求，
+        否則不要直接提供最終答案。
+        
+        學生問題：
+        {user_msg}
+        """
         response = client.models.generate_content(
             model='gemini-2.5-flash',
-            contents=user_msg
+            contents=prompt
         )
         reply = response.text
     except Exception as e:
