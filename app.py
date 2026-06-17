@@ -103,6 +103,13 @@ def handle_message(event):
             8. 學生輸入「完整解答」時才提供完整答案。
             9. 使用繁體中文。
             10. 回答控制在150字內。
+            11. A、B選項每項不超過20字。
+
+            最近對話：
+            {history}
+            
+            學生訊息：
+            {user_msg}
             """
         import time
 
@@ -125,10 +132,10 @@ def handle_message(event):
         )
         
         conversation_memory[user_id].append(
-            f"AI：{reply}"
+            "AI：已提供提示"
         )
         
-        conversation_memory[user_id] = conversation_memory[user_id][-6:]
+        conversation_memory[user_id] = conversation_memory[user_id][-2:]
     except Exception as e:
         print(f'Gemini error: {e}')
     
