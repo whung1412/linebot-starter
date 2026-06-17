@@ -46,7 +46,7 @@ def log_to_sheets(user_id, user_msg, bot_reply):
         values = [[now, user_id, user_msg, bot_reply]]
         service.spreadsheets().values().append(
             spreadsheetId=SPREADSHEET_ID,
-            range='工作表1!A1:D100',
+            range='工作表1!A:D',
             valueInputOption='RAW',
             body={'values': values}
         ).execute()
@@ -55,6 +55,10 @@ def log_to_sheets(user_id, user_msg, bot_reply):
         print(f'記錄失敗: {e}')
         traceback.print_exc()
 
+@app.route("/")
+def home():
+    return "OK"
+    
 @app.route("/webhook", methods=['POST'])
 def webhook():
     signature = request.headers['X-Line-Signature']
