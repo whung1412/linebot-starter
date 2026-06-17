@@ -130,11 +130,13 @@ def handle_message(event):
         
         conversation_memory[user_id] = conversation_memory[user_id][-6:]
     except Exception as e:
-        print(f'Gemini error: {e}')
+        error_msg = str(e)
+    
+        print(f'Gemini error: {error_msg}')
     
         if "503" in error_msg:
             reply = "⚠️ Gemini目前流量較大，請稍後再試。"
-
+    
         elif "429" in error_msg:
             reply = "⚠️ 已超過API使用額度，請稍後再試。"
     
