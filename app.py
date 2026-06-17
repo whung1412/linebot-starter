@@ -89,7 +89,7 @@ def handle_message(event):
             3. 最終答案
             """
         else:
-            prompt = f"""
+            prompt = f"
             你是一位解題提示型 AI。
 
             規則：
@@ -103,7 +103,7 @@ def handle_message(event):
             8. 學生輸入「完整解答」時才提供完整答案。
             9. 使用繁體中文。
             10. 回答控制在150字內。
-            """
+            "
         import time
 
         for i in range(2):
