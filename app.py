@@ -95,15 +95,11 @@ def handle_message(event):
             以下是學生先前的對話紀錄：
             {history}
             請根據先前教學進度繼續引導。
-            規則：
-            
-            1. 不要直接給答案。
-            2. 一次只能給一個提示。
-            3. 不要提前透露下一個提示。
-            4. 每次回答後都要等待學生回覆。
-            5. 若學生回答錯誤，再給下一層提示。
-            6. 若學生回答正確，給予鼓勵並繼續引導。
-            7. 只有學生明確要求完整解答時，才提供完整解題過程。
+            請遵守：
+            1. 不直接給答案
+            2. 一次只給一個提示
+            3. 若學生答錯，給下一層提示
+            4. 使用繁體中文
             
             回答格式：
             
@@ -119,10 +115,21 @@ def handle_message(event):
             最後一定要加上：
             「你覺得下一步該怎麼做呢？」
             """
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt
-        )
+        import time
+
+        for i in range(2):
+            try:
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=prompt
+                )
+                break
+        
+            except Exception as e:
+                if "503" in str(e) and i == 0:
+                    time.sleep(3)
+                    continue
+                raise
         reply = response.text
         conversation_memory[user_id].append(
             f"學生：{user_msg}"
@@ -135,7 +142,12 @@ def handle_message(event):
         conversation_memory[user_id] = conversation_memory[user_id][-6:]
     except Exception as e:
         print(f'Gemini error: {e}')
-        reply = f'錯誤：{str(e)}'
+    
+        if "503" in str(e):
+            reply = "目前AI服務較繁忙，請稍後再試一次。"
+    
+        else:
+            reply = "系統發生錯誤，請稍後再試。"
     log_to_sheets(user_id, user_msg, reply)
     line_bot_api.reply_message(
         event.reply_token,
