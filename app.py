@@ -134,11 +134,20 @@ def handle_message(event):
     except Exception as e:
         print(f'Gemini error: {e}')
     
-        if "503" in str(e):
-            reply = "目前AI服務較繁忙，請稍後再試一次。"
+        if "503" in error_msg:
+            reply = "⚠️ Gemini目前流量較大，請稍後再試。"
+
+        elif "429" in error_msg:
+            reply = "⚠️ 已超過API使用額度，請稍後再試。"
+    
+        elif "400" in error_msg:
+            reply = "⚠️ 題目格式可能有問題，請重新輸入。"
+    
+        elif "401" in error_msg:
+            reply = "⚠️ API金鑰驗證失敗。"
     
         else:
-            reply = "系統發生錯誤，請稍後再試。"
+            reply = f"⚠️ 系統錯誤：{error_msg[:100]}"
     log_to_sheets(user_id, user_msg, reply)
     line_bot_api.reply_message(
         event.reply_token,
