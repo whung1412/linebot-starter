@@ -95,15 +95,9 @@ def handle_message(event):
             規則：
             1. 不直接公布答案。
             2. 每次只引導一個步驟。
-            3. 每次提供A、B兩個選項。
-            4. 學生選對時給予鼓勵並進入下一步。
-            5. 學生選錯時簡單說明原因並重新引導。
-            6. 不要一次規劃完整解題流程。
-            7. 只專注於目前這一步。
-            8. 學生輸入「完整解答」時才提供完整答案。
-            9. 使用繁體中文。
-            10. 回答控制在150字內。
-            11. A、B選項每項不超過20字。
+            3. 學生輸入「完整解答」時才提供完整答案。
+            4. 使用繁體中文。
+            5. 回答控制在150字內。
 
             最近對話：
             {history}
@@ -135,7 +129,7 @@ def handle_message(event):
             "AI：已提供提示"
         )
         
-        conversation_memory[user_id] = conversation_memory[user_id][-2:]
+        conversation_memory[user_id] = conversation_memory[user_id][-6:]
     except Exception as e:
         print(f'Gemini error: {e}')
     
