@@ -21,6 +21,7 @@ GOOGLE_CREDENTIALS = os.environ.get('GOOGLE_CREDENTIALS')
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 client = genai.Client(api_key=GEMINI_API_KEY)
+conversation_memory = {}
 
 def get_sheets_service():
     try:
@@ -45,7 +46,7 @@ def log_to_sheets(user_id, user_msg, bot_reply):
         values = [[now, user_id, user_msg, bot_reply]]
         service.spreadsheets().values().append(
             spreadsheetId=SPREADSHEET_ID,
-            range='工作表1!A:D',
+            range='工作表1!A1:D100',
             valueInputOption='RAW',
             body={'values': values}
         ).execute()
@@ -53,38 +54,6 @@ def log_to_sheets(user_id, user_msg, bot_reply):
     except Exception as e:
         print(f'記錄失敗: {e}')
         traceback.print_exc()
-
-def get_recent_history(user_id, limit=5):
-    try:
-        service = get_sheets_service()
-        if not service:
-            return ""
-
-        result = service.spreadsheets().values().get(
-            spreadsheetId=SPREADSHEET_ID,
-            range='工作表1!A:D'
-        ).execute()
-
-        rows = result.get('values', [])
-
-        history = []
-
-        for row in reversed(rows):
-            if len(row) >= 4 and row[1] == user_id:
-                history.append(
-                    f"學生：{row[2]}\nAI：{row[3]}"
-                )
-
-                if len(history) >= limit:
-                    break
-
-        history.reverse()
-
-        return "\n\n".join(history)
-
-    except Exception as e:
-        print(f"讀取歷史紀錄失敗: {e}")
-        return ""
 
 @app.route("/webhook", methods=['POST'])
 def webhook():
@@ -100,8 +69,12 @@ def webhook():
 def handle_message(event):
     user_msg = event.message.text
     user_id = event.source.user_id
+    if user_id not in conversation_memory:
+        conversation_memory[user_id] = []
     try:
-        history = get_recent_history(user_id)
+        history = "\n".join(
+            conversation_memory[user_id][-5:]
+        )
         if user_msg == "完整解答":
             prompt = """
             使用者要求完整解答。
@@ -147,6 +120,15 @@ def handle_message(event):
             contents=prompt
         )
         reply = response.text
+        conversation_memory[user_id].append(
+            f"學生：{user_msg}"
+        )
+        
+        conversation_memory[user_id].append(
+            f"AI：{reply}"
+        )
+        
+        conversation_memory[user_id] = conversation_memory[user_id][-6:]
     except Exception as e:
         print(f'Gemini error: {e}')
         reply = f'錯誤：{str(e)}'
