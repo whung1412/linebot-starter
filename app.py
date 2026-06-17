@@ -126,9 +126,8 @@ def handle_message(event):
         conversation_memory[user_id].append(
             f"學生：{user_msg}"
         )
-        
         conversation_memory[user_id].append(
-            "AI：已提供提示"
+            f"AI：{reply[:50]}"
         )
         
         conversation_memory[user_id] = conversation_memory[user_id][-6:]
